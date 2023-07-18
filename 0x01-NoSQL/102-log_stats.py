@@ -1,20 +1,26 @@
 #!/usr/bin/env python3
-"""
-Script that provides some stats about Nginx logs stored in MongoDB.
-"""
+"""Script that provides some stats about Nginx logs stored in MongoDB."""
 from pymongo import MongoClient
 
 
+def helper(a: dict) -> int:
+    """return log"""
+    client = MongoClient('mongodb://127.0.0.1:27017')
+    logs = client.logs.nginx
+    return logs.count_documents(a)
+
+
+def main():
+    """ provides some stats about Nginx logs stored in MongoDB """
+    print(f"{helper({})} logs")
+    print("Methods:")
+    print(f"\tmethod GET: {helper({'method': 'GET'})}")
+    print(f"\tmethod POST: {helper({'method': 'POST'})}")
+    print(f"\tmethod PUT: {helper({'method': 'PUT'})}")
+    print(f"\tmethod PATCH: {helper({'method': 'PATCH'})}")
+    print(f"\tmethod DELETE: {helper({'method': 'DELETE'})}")
+    print(f"{helper({'method': 'GET', 'path': '/status'})} status check")
+
+
 if __name__ == "__main__":
-    client = MongoClient('mongodb://localhost:27017')
-    collec = client.logs.nginx
-
-    print(f'{collec.count_documents({})} logs')
-    print('Methods:')
-
-    print(f'\tmethod GET: {collec.count_documents({"method": "GET"})}')
-    print(f'\tmethod POST: {collec.count_documents({"method": "POST"})}')
-    print(f'\tmethod PUT: {collec.count_documents({"method": "PUT"})}')
-    print(f'\tmethod PATCH: {collec.count_documents({"method": "PATCH"})}')
-    print(f'\tmethod DELETE: {collec.count_documents({"method": "DELETE"})}')
-    print(f'{collec.count_documents({"path": "/status"})} status check')
+    main()
