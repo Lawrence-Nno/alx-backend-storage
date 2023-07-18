@@ -1,26 +1,39 @@
 #!/usr/bin/env python3
-"""Script that provides some stats about Nginx logs stored in MongoDB."""
+"""Print info in a collection"""
 from pymongo import MongoClient
 
-
-def helper(a: dict) -> int:
-    """return log"""
-    client = MongoClient('mongodb://127.0.0.1:27017')
-    logs = client.logs.nginx
-    return logs.count_documents(a)
-
-
-def main():
-    """ provides some stats about Nginx logs stored in MongoDB """
-    print(f"{helper({})} logs")
-    print("Methods:")
-    print(f"\tmethod GET: {helper({'method': 'GET'})}")
-    print(f"\tmethod POST: {helper({'method': 'POST'})}")
-    print(f"\tmethod PUT: {helper({'method': 'PUT'})}")
-    print(f"\tmethod PATCH: {helper({'method': 'PATCH'})}")
-    print(f"\tmethod DELETE: {helper({'method': 'DELETE'})}")
-    print(f"{helper({'method': 'GET', 'path': '/status'})} status check")
-
-
 if __name__ == "__main__":
-    main()
+    """ Make a check for all elements in a collention """
+    client = MongoClient('mongodb://127.0.0.1:27017')
+    collection = client.logs.nginx
+
+    print(f"{collection.estimated_document_count()} logs")
+
+    print("Methods:")
+    for method in ["GET", "POST", "PUT", "PATCH", "DELETE"]:
+        method_count = collection.count_documents({'method': method})
+        print(f"\tmethod {method}: {method_count}")
+
+    check_get = collection.count_documents({
+        'method': 'GET', 'path': "/status"
+    })
+    print(f"{check_get} status check")
+
+    print("IPs:")
+    top_ips = collection.aggregate([
+        {"$group":
+            {
+                "_id": "$ip",
+                "count": {"$sum": 1}
+            }
+        },
+        {"$sort": {"count": -1}},
+        {"$limit": 10},
+        {"$project": {
+            "_id": 0,
+            "ip": "$_id",
+            "count": 1
+        }}
+    ])
+    for ip in top_ips:
+        print(f"\t{ip.get('ip')}: {ip.get('count')}")
