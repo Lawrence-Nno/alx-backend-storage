@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Print info in a collection"""
+"""Adds top 10 of the most present IPs in the collection nginx of the database logs"""
 from pymongo import MongoClient
 
 if __name__ == "__main__":
