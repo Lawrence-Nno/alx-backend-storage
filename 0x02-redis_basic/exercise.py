@@ -35,7 +35,7 @@ def call_history(method: Callable) -> Callable:
 
 
 def replay(method: Callable):
-    """ Displays the history of calls of a particular func """
+    """ Displays the history of calls of a particular function """
     r = method.__self__._redis
     keys = method.__qualname__
     inputs = r.lrange("{}:inputs".format(keys), 0, -1)
