@@ -1,51 +1,21 @@
 #!/usr/bin/env python3
-"""web module
-"""
-from functools import wraps
-from typing import Callable
+""" Implementing a funcion that obtains the HTML content of...
+    ...a particular URL and returns it """
 import redis
 import requests
-
-_redis = redis.Redis()
-_redis.flushdb()
-
-
-def count_requests(method: Callable) -> Callable:
-    """count_requests function
-
-    Args:
-        method (Callable): method
-
-    Returns:
-        Callable: wrapper
-    """
-    @wraps(method)
-    def wrapper(*args, **kwargs):
-        """wrapper function
-
-        Returns:
-            [type]: wrapper
-        """
-        url = args[0]
-        cached = _redis.get(f"cached:{url}")
-        if cached:
-            return cached.decode("utf-8")
-        response = method(*args, **kwargs)
-        _redis.incr(f"count:{url}")
-        _redis.setex(f"cached:{url}", 10, response)
-        return response
-    return wrapper
+r = redis.Redis()
+count = 0
 
 
-@count_requests
 def get_page(url: str) -> str:
-    """get_page function
+    """ This func tracks how many times a particular URL was accessed...
+        and caches the result with an expiration time of 10 secs """
+    r.set(f"cached:{url}", count)
+    resp = requests.get(url)
+    r.incr(f"count:{url}")
+    r.setex(f"cached:{url}", 10, r.get(f"cached:{url}"))
+    return resp.text
 
-    Args:
-        url (str): url
 
-    Returns:
-        str: response
-    """
-    response = requests.get(url, timeout=10)
-    return response.text
+if __name__ == "__main__":
+    get_page('http://slowwly.robertomurray.co.uk')
